@@ -67,18 +67,36 @@ router.get("/random", async (req, res, next) => {
   }
 });
 
-// Get a recipe by ID
-// routes/recipes.js
-router.get('/:id', async (req, res) => {
+// Get a recipe by ID array of ids
+// router.get('/:id', async (req, res) => {
+//   try {
+//     const id = Number(req.params.id);            // 131 → 131
+
+//     const recipe = await Recipes.findOne({ id }); //  ← custom field, not _id
+
+//     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
+//     res.json(recipe);
+//   } catch (e) {
+//     res.status(500).json({ message: e.message });
+//   }
+// });
+
+router.get("/ids", async (req, res) => {
   try {
-    const id = Number(req.params.id);            // 131 → 131
+    // Accept comma-separated list or repeated query keys
+    let ids = req.query.ids;
+    if (!ids)
+      return res.status(400).json({ message: "ids query param required" });
 
-    const recipe = await Recipes.findOne({ id }); //  ← custom field, not _id
+    if (Array.isArray(ids)) ids = ids.flat(); // ids[]=131&ids[]=205…
+    if (typeof ids === "string") ids = ids.split(",");
 
-    if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
-    res.json(recipe);
-  } catch (e) {
-    res.status(500).json({ message: e.message });
+    const numericIds = ids.map(Number).filter(Boolean); // [131,205,402]
+
+    const recipes = await Recipes.find({ id: { $in: numericIds } }).lean();
+    res.json(recipes); // array of docs
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 });
 
