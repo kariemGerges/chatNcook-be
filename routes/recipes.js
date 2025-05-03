@@ -102,5 +102,13 @@ router.get("/ids", async (req, res) => {
 
 
 // Create a new recipe
+router.post("/addNew", async (req, res) => {
+  try {
+    const recipe = await Recipes.create(req.body);
+    res.json(recipe);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
 module.exports = router;
