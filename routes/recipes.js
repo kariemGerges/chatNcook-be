@@ -1,6 +1,9 @@
 const express = require("express");
 const { default: mongoose } = require("mongoose");
 const router = express.Router();
+const sanitize = require("mongo-sanitize");
+const rateLimit = require("express-rate-limit");
+
 
 // Import the Recipe model
 require("../models/Recipes");
@@ -67,20 +70,6 @@ router.get("/random", async (req, res, next) => {
   }
 });
 
-// Get a recipe by ID array of ids
-// router.get('/:id', async (req, res) => {
-//   try {
-//     const id = Number(req.params.id);            // 131 → 131
-
-//     const recipe = await Recipes.findOne({ id }); //  ← custom field, not _id
-
-//     if (!recipe) return res.status(404).json({ message: 'Recipe not found' });
-//     res.json(recipe);
-//   } catch (e) {
-//     res.status(500).json({ message: e.message });
-//   }
-// });
-
 router.get("/ids", async (req, res) => {
   try {
     // Accept comma-separated list or repeated query keys
@@ -100,14 +89,30 @@ router.get("/ids", async (req, res) => {
   }
 });
 
+const createRecipeLimit = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+});
 
 // Create a new recipe
-router.post("/addNew", async (req, res) => {
+router.post("/addNew", createRecipeLimit, async (req, res) => {
   try {
-    const recipe = await Recipes.create(req.body);
-    res.json(recipe);
+
+    const sanitizedData = sanitize(req.body);
+
+    const recipe = await Recipes.create(sanitizedData);
+
+    res.status(201).json({
+      success: true,
+      message: "Recipe created successfully",
+      data: recipe,
+    });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    res.status(500).json({
+      success: false,
+      message: "Failed to create recipe",
+      error: err.message,
+    });
   }
 });
 
