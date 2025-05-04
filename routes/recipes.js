@@ -114,6 +114,38 @@ router.post("/addNew", createRecipeLimit, async (req, res) => {
       error: err.message,
     });
   }
+
+});
+
+// get all recipes by user id
+router.get("/:userId", async (req, res) => {
+
+  // Sanitize userId
+  const sanitizedUserId = sanitize(req.params.userId);
+
+  try {
+    const recipes = await Recipes.find({ author: sanitizedUserId });
+
+    if (!recipes || recipes.length === 0) {
+      return res.status(404).json({ message: "No recipes found for this user" });
+    }
+
+    // count the number of recipes
+    const recipeCount = recipes.length;
+
+    res.status(200).json({
+      success: true,
+      message: "Recipes retrieved successfully",
+      recipeCount: recipeCount,
+      data: recipes,
+    });
+  } catch (err) {
+      res.status(500).json({
+        success: false,
+        message: "Failed to create recipe",
+        error: err.message,
+      });
+  }
 });
 
 module.exports = router;
