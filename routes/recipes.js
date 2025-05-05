@@ -112,6 +112,8 @@ router.post("/addNew", createRecipeLimit, async (req, res) => {
       success: false,
       message: "Failed to create recipe",
       error: err.message,
+      stack: err.stack,
+      
     });
   }
 
