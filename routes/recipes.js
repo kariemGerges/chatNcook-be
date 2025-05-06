@@ -128,7 +128,7 @@ router.get("/:userId", async (req, res) => {
   try {
     const recipes = await Recipes.find({ author: sanitizedUserId });
 
-    if (!recipes || recipes.length === 0) {
+    if (!recipes) {
       return res.status(404).json({ message: "No recipes found for this user" });
     }
 
