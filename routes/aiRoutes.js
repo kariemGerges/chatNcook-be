@@ -8,11 +8,9 @@ router.post('/generate', async (req, res) => {
     const { prompt, history } = req.body; // history is optional
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
-        return res
-            .status(400)
-            .json({
-                error: 'Prompt is required and must be a non-empty string.',
-            });
+        return res.status(400).json({
+            error: 'Prompt is required and must be a non-empty string.',
+        });
     }
 
     // Basic validation for history (if provided)
@@ -29,25 +27,19 @@ router.post('/generate', async (req, res) => {
                 !item.parts ||
                 !Array.isArray(item.parts)
             ) {
-                return res
-                    .status(400)
-                    .json({
-                        error: 'Invalid history item format. Expected {role: string, parts: [{text: string}]}',
-                    });
+                return res.status(400).json({
+                    error: 'Invalid history item format. Expected {role: string, parts: [{text: string}]}',
+                });
             }
             if (!['user', 'model'].includes(item.role)) {
-                return res
-                    .status(400)
-                    .json({
-                        error: "History item role must be 'user' or 'model'.",
-                    });
+                return res.status(400).json({
+                    error: "History item role must be 'user' or 'model'.",
+                });
             }
             if (item.parts.some((part) => typeof part.text !== 'string')) {
-                return res
-                    .status(400)
-                    .json({
-                        error: "History item parts must contain objects with a 'text' string.",
-                    });
+                return res.status(400).json({
+                    error: "History item parts must contain objects with a 'text' string.",
+                });
             }
         }
     }
@@ -80,17 +72,29 @@ router.post('/generate-stream', async (req, res) => {
     const { prompt, history } = req.body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
-        return res
-            .status(400)
-            .json({
-                error: 'Prompt is required and must be a non-empty string.',
-            });
+        return res.status(400).json({
+            error: 'Prompt is required and must be a non-empty string.',
+        });
     }
     // Basic history validation (can be more robust)
-    if (history && !Array.isArray(history)) {
-        return res
-            .status(400)
-            .json({ error: 'History must be an array if provided.' });
+    if (history) {
+        if (!Array.isArray(history)) {
+            return res.status(400).json({ error: 'History must be an array.' });
+        }
+        for (const item of history) {
+            if (
+                typeof item !== 'object' ||
+                !item.role ||
+                !Array.isArray(item.parts) ||
+                item.parts.some(
+                    (part) => typeof part.text !== 'string' || !part.text.trim()
+                )
+            ) {
+                return res.status(400).json({
+                    error: "Invalid history format. Each item must be { role: 'user' | 'model', parts: [{ text: string }] }",
+                });
+            }
+        }
     }
 
     try {
